@@ -1,0 +1,2 @@
+- running csv_gen.py will simulate csv files being generated for 3.1 seconds, using a csv located as 'data/newcsvfile.csv' as a base.
+- change the duration with --duration and the path to the csv with --basefile
