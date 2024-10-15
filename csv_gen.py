@@ -11,9 +11,10 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--duration", default = 3.1, type = float)
 parser.add_argument("--basefile", default = 'data/newcsvfile.csv', type = str)
+parser.add_argument("--output", default = 'outputs', type = str)
 
 args = parser.parse_args()
 
 example = ExperimentDataGenerator()
 example.load_csv_files(args.basefile)
-example.generate_data(duration = args.duration)
+example.generate_data(duration = args.duration, outputloc = args.output)

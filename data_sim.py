@@ -11,6 +11,7 @@ import numpy as np
 from PIL import Image
 import csv
 import pandas as pd
+import os
 
 
 
@@ -71,7 +72,7 @@ class ExperimentDataGenerator:
         self._csv_count = 0
 
 
-    def generate_data(self, duration: float) -> None:
+    def generate_data(self, duration: float, outputloc = str) -> None:
 
         if duration < 0.0:
             raise DataGeneratorError("Data generation duration must be greater than 0")
@@ -88,19 +89,19 @@ class ExperimentDataGenerator:
                 print(f'Duration = {duration_timer.elapsed_time()}s')
 
                 self.write_traces()
-                self.write_csv()
+                self.write_csv(outputloc)
 
 
     def write_traces(self) -> None:
         print('Writing traces')
 
 
-    def write_csv(self) -> None:
+    def write_csv(self, outputloc) -> None:
 
         for nn,ii in enumerate(self._csv_files):
             n_bits = 8
             csv_num_str = str(self._csv_count).zfill(4)
-            save_file = f'{self._csv_file_tag}_{csv_num_str }_{nn}.csv'
+            save_file = os.path.join(outputloc,f'{self._csv_file_tag}_{csv_num_str }_{nn}.csv')
 
             headers = [i for i in self._csv_files]
 
