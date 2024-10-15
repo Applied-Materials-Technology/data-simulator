@@ -1,2 +1,4 @@
+- Create virutal venv python -m venv datasimvenv
+- Install requirements pip install -r requirements.txt
 - running csv_gen.py will simulate csv files being generated for 3.1 seconds, using a csv located as 'data/newcsvfile.csv' as a base, and saving csvs to an "outputs" directory as a default.
 - change the duration with --duration, the path to the csv with --basefile, and output location with --output 
