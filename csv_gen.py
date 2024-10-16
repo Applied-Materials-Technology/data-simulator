@@ -9,10 +9,10 @@ import csv
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--duration", default = 3.1, type = float)
+parser.add_argument("--duration", default = 1000, type = float)
 parser.add_argument("--basefile", default = 'data/newcsvfile.csv', type = str)
 parser.add_argument("--output", default = 'outputs', type = str)
-parser.add_argument("--frequency", default = 1.0, type = float)
+parser.add_argument("--frequency", default = 0.1, type = float)
 
 args = parser.parse_args()
 
