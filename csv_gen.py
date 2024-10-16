@@ -12,9 +12,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--duration", default = 3.1, type = float)
 parser.add_argument("--basefile", default = 'data/newcsvfile.csv', type = str)
 parser.add_argument("--output", default = 'outputs', type = str)
+parser.add_argument("--frequency", default = 1.0, type = float)
 
 args = parser.parse_args()
 
-example = ExperimentDataGenerator()
-example.load_csv_files(args.basefile)
+image_files = [Path('data/OptSpeckle_5Mpx_2464_2056_width5_8bit_GBlur1.tiff'), Path('data/OptSpeckle_5Mpx_2464_2056_width5_8bit_GBlur1.tiff')]
+
+example = ExperimentDataGenerator(frequency = args.frequency)
+example.load_csv_files(args.basefile, image_files)
 example.generate_data(duration = args.duration, outputloc = args.output)
