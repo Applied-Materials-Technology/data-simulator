@@ -17,7 +17,8 @@ parser.add_argument("--frequency", default = 1.0, type = float)
 args = parser.parse_args()
 
 image_files = [Path('data/OptSpeckle_5Mpx_2464_2056_width5_8bit_GBlur1.tiff'), Path('data/OptSpeckle_5Mpx_2464_2056_width5_8bit_GBlur1.tiff')]
+match_id_file = 'data/Test001_19-0kW.m3inp'
 
 example = ExperimentDataGenerator(frequency = args.frequency)
-example.load_csv_files(args.basefile, image_files)
+example.load_csv_files(args.basefile, image_files, match_id_file)
 example.generate_data(duration = args.duration, outputloc = args.output)
