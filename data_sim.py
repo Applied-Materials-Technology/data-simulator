@@ -102,7 +102,7 @@ class ExperimentDataGenerator:
 
         duration_timer.start()
         output_timer.start()
-
+        write_metadata = shutil.copyfile(self._match_id_files, os.path.join(outputloc,f'metadata.m3inp'))
         while not duration_timer.finished():
             if output_timer.finished():
                 output_timer.start()
@@ -118,7 +118,7 @@ class ExperimentDataGenerator:
 
     def write_csv(self, outputloc, std_dev = 10) -> None:
 
-        write_metadata = shutil.copyfile(self._match_id_files, os.path.join(outputloc,f'metadata.m3inp'))
+        #write_metadata = shutil.copyfile(self._match_id_files, os.path.join(outputloc,f'metadata.m3inp'))
 
         for nn,ii in enumerate(self._csv_files):
             n_bits = 8
