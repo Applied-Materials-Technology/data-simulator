@@ -153,15 +153,20 @@ class ExperimentDataGenerator:
                 write.writerow(headers)
                 write.writerows(csv_list)
 
+
             with open(os.path.join(outputloc,"images.csv"), "a") as csvFile:
                 fieldnames = ['Image path']
                 writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
+                #writer = csv.writer(csvFile)
 
                 writer.writeheader()
                 writer.writerow({'Image path': save_file_img })
+                #writer.writerow(save_file_img)
 
 
         self._csv_count += 1
         self._image_count += 1
+
+
 
 
