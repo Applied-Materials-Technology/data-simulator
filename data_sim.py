@@ -118,7 +118,6 @@ class ExperimentDataGenerator:
 
     def write_csv(self, outputloc, std_dev = 10) -> None:
 
-        #write_metadata = shutil.copyfile(self._match_id_files, os.path.join(outputloc,f'metadata.m3inp'))
 
         for nn,ii in enumerate(self._csv_files):
             n_bits = 8
@@ -135,20 +134,14 @@ class ExperimentDataGenerator:
         for nn,ii in enumerate(self._image_files):
             #0 = mean, 10 = standard deviation
             n_bits = 8
-            #noise = np.random.normal(0, std_dev, size=ii.shape)
             noise = np.random.default_rng().standard_normal(ii.shape)
             noise_bits = noise*2**n_bits*std_dev/100
             img_noised = ii + noise_bits
             final_image = np.array(img_noised,dtype=np.uint8)
             image_num_str = str(self._image_count).zfill(4)
-            #save_file = f'{self._image_file_tag}_{image_num_str }_{nn}.tiff'
             save_file_img = os.path.join(outputloc,f'{self._csv_file_tag}_{csv_num_str }_{nn}.tiff')
             save_path_img = self._target_path / save_file_img
-
-            #im = Image.fromarray(ii)
-            #plt.imsave(save_file, img_noised, cmap="gray")
             plt.imsave(save_file_img, final_image, cmap="gray")
-            #im.save(save_path)
 
 
 
@@ -159,6 +152,13 @@ class ExperimentDataGenerator:
      
                 write.writerow(headers)
                 write.writerows(csv_list)
+
+            with open(os.path.join(outputloc,"images.csv"), "a") as csvFile:
+                fieldnames = ['Image path']
+                writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
+
+                writer.writeheader()
+                writer.writerow({'Image path': save_file_img })
 
 
         self._csv_count += 1
