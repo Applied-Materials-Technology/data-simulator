@@ -111,6 +111,9 @@ class ExperimentDataGenerator:
                 self.write_traces()
                 self.write_csv(outputloc)
 
+    def metadata_only(self, outputloc = str) -> None:
+        write_metadata = shutil.copyfile(self._match_id_files, os.path.join(outputloc,f'metadata.m3inp'))
+
 
     def write_traces(self) -> None:
         print('Writing traces')
