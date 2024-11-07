@@ -20,5 +20,8 @@ image_files = [Path('data/OptSpeckle_5Mpx_2464_2056_width5_8bit_GBlur1.tiff'), P
 match_id_file = 'data/Test001_19-0kW.m3inp'
 
 example = ExperimentDataGenerator(frequency = args.frequency)
+"""args.basefile - csv to generate from
+    image_files - base images to generate tiff files from
+    match_id_file - m3inp file to generate from"""
 example.load_csv_files(args.basefile, image_files, match_id_file)
 example.generate_data(duration = args.duration, outputloc = args.output)

@@ -2,7 +2,7 @@
 
 - Create and activate virutal environment
 ```
-python3 -m venv datasimenv
+python -m venv datasimenv
 source datasimenv/bin/activate
 ```
 - Install requirements
