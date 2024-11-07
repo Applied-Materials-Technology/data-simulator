@@ -17,3 +17,4 @@ pip install -r requirements.txt
 - --duration : how long data will be generated in seconds, default = 1000
 - --output : the directory in which generated data will appear, default = 'outputs'
 - --frequency : the frequency at which data is generated in Hz, default = 0.1
+- -- onecsv : toggle between a single updating csv (True), or multiple csvs (False), default = False
