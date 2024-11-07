@@ -92,7 +92,7 @@ class ExperimentDataGenerator:
         self._image_count = 0
 
 
-    def generate_data(self, duration: float, outputloc = str) -> None:
+    def generate_data(self, duration: float, outputloc = str, onecsv = bool) -> None:
 
         if duration < 0.0:
             raise DataGeneratorError("Data generation duration must be greater than 0")
@@ -109,7 +109,10 @@ class ExperimentDataGenerator:
                 print(f'Duration = {duration_timer.elapsed_time()}s')
 
                 self.write_traces()
-                self.write_csv(outputloc)
+                if onecsv == True:
+                    self.write_files_onecsv(outputloc)
+                else:
+                    self.write_files(outputloc)
 
     def metadata_only(self, outputloc = str) -> None:
         write_metadata = shutil.copyfile(self._match_id_files, os.path.join(outputloc,f'metadata.m3inp'))
@@ -119,7 +122,7 @@ class ExperimentDataGenerator:
         print('Writing traces')
 
 
-    def write_csv(self, outputloc, std_dev = 10) -> None:
+    def write_files_onecsv(self, outputloc, std_dev = 10) -> None:
 
 
         for nn,ii in enumerate(self._csv_files):
@@ -147,16 +150,7 @@ class ExperimentDataGenerator:
             plt.imsave(save_file_img, final_image, cmap="gray")
 
 
-
-            with open(save_file, 'w') as f:
-     
-                # using csv.writer method from CSV package
-                write = csv.writer(f)
-     
-                write.writerow(headers)
-                write.writerows(csv_list)
-
-
+            #updating csv
             with open(os.path.join(outputloc,"images.csv"), "a") as csvFile:
                 fieldnames = ['Image path']
                 writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
@@ -172,4 +166,43 @@ class ExperimentDataGenerator:
 
 
 
+    def write_files(self, outputloc, std_dev = 10) -> None:
 
+
+        for nn,ii in enumerate(self._csv_files):
+            n_bits = 8
+            csv_num_str = str(self._csv_count).zfill(4)
+            save_file = os.path.join(outputloc,f'{self._csv_file_tag}_{csv_num_str }_{nn}.csv')
+
+            headers = [i for i in self._csv_files]
+
+            csv_list = []
+            for i in headers:
+                row = self._csv_files[i]
+                csv_list.append(row)
+
+        for nn,ii in enumerate(self._image_files):
+            #0 = mean, 10 = standard deviation
+            n_bits = 8
+            noise = np.random.default_rng().standard_normal(ii.shape)
+            noise_bits = noise*2**n_bits*std_dev/100
+            img_noised = ii + noise_bits
+            final_image = np.array(img_noised,dtype=np.uint8)
+            image_num_str = str(self._image_count).zfill(4)
+            save_file_img = os.path.join(outputloc,f'{self._csv_file_tag}_{csv_num_str }_{nn}.tiff')
+            save_path_img = self._target_path / save_file_img
+            plt.imsave(save_file_img, final_image, cmap="gray")
+
+
+            #new csvs
+            with open(save_file, 'w') as f:
+     
+                # using csv.writer method from CSV package
+                write = csv.writer(f)
+     
+                write.writerow(headers)
+                write.writerows(csv_list)
+
+
+        self._csv_count += 1
+        self._image_count += 1

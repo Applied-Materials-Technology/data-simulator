@@ -10,7 +10,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--duration", default = 1000, type = float)
-#parser.add_argument("--basefile", default = 'data/newcsvfile.csv', type = str)
+parser.add_argument("--onecsv", default = False, type = bool)
 parser.add_argument("--output", default = 'outputs', type = str)
 parser.add_argument("--frequency", default = 0.1, type = float)
 
@@ -27,4 +27,4 @@ example = ExperimentDataGenerator(frequency = args.frequency)
     match_id_file - m3inp file to generate from"""
 example.load_csv_files(csv_file, image_files, match_id_file)
 
-example.generate_data(duration = args.duration, outputloc = args.output)
+example.generate_data(duration = args.duration, outputloc = args.output, onecsv = args.onecsv)
