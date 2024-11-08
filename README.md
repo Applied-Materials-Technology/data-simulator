@@ -14,7 +14,8 @@ pip install -r requirements.txt
 
 ## Usage & Options
 
-**Example Usage**
+**Example Usage**  
+
 Generate data for 10 seconds in the "outputs" folder at a frequency of 1.0 Hz:
 ```shell
 python datasim.py --duration 10.0  --output "outputs" --frequency 1.0 --onecsv False
