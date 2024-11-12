@@ -132,86 +132,65 @@ class ExperimentDataGenerator:
     def metadata_only(self, outputloc = str) -> None:
         shutil.copyfile(self._match_id_file, Path(outputloc) / self.gen_opts.matchid_file)
 
+    def csv_reader(self, output_loc):
+        csv_num_str = str(self._data_frame_count).zfill(4)
+        save_file = output_loc / f'{self.gen_opts.trace_file_tag}_{csv_num_str }_0.csv' 
+
+        headers = [i for i in self._csv_file]
+
+        csv_list = []
+        for i in headers:
+            row = self._csv_file[i]
+            csv_list.append(row)
+
+            
+            return csv_num_str, save_file, csv_list, headers
+
+    def generate_images(self, output_loc, std_dev, csv_num_str):
+        for nn,ii in enumerate(self._image_files):
+            #0 = mean, 1 = standard deviation
+            noise = np.random.default_rng().standard_normal(ii.shape)
+            noise_bits = noise*2**self.gen_opts.n_bits**std_dev/100
+            img_noised = ii + noise_bits
+            final_image = np.array(img_noised,dtype=np.uint8) # NOTE: checkout integer overflow issues here and use np.ceil / np.floor
+            save_file_img = os.path.join(output_loc,f'{self.gen_opts.trace_file_tag}_{csv_num_str }_{nn}.tiff')
+            save_path_img = self._target_path / save_file_img
+            plt.imsave(save_file_img, final_image, cmap="gray")
+            return save_file_img
+
 
     def write_files_onecsv(self, output_loc: str, std_dev: float = 1.0) -> None:
 
         output_loc = Path(output_loc)
 
-        #TODO: Simplify this as we only have one csv file 
-        for nn,ii in enumerate(self._csv_file):
-            csv_num_str = str(self._data_frame_count).zfill(4)
-            #TODO: nn is not right for the csv string - we want this to be the same as 
-            save_file = output_loc / f'{self.gen_opts.trace_file_tag}_{csv_num_str }_0.csv' 
+        csv_num_str, save_file, csv_list, headers = self.csv_reader(output_loc)
 
-            headers = [i for i in self._csv_file]
-
-            csv_list = []
-            for i in headers:
-                row = self._csv_file[i]
-                csv_list.append(row)
-
-        for nn,ii in enumerate(self._image_files):
-            #0 = mean, 1 = standard deviation
-            #-----------------------------------------------------------------------------------------------
-            #TODO: turn this into a function
-            noise = np.random.default_rng().standard_normal(ii.shape)
-            noise_bits = noise*2**self.gen_opts.n_bits**std_dev/100
-            img_noised = ii + noise_bits
-            final_image = np.array(img_noised,dtype=np.uint8) # NOTE: checkout integer overflow issues here and use np.ceil / np.floor
-            image_num_str = str(self._data_frame_count).zfill(4)
-            save_file_img = os.path.join(output_loc,f'{self.gen_opts.trace_file_tag}_{csv_num_str }_{nn}.tiff')
-            save_path_img = self._target_path / save_file_img
-            plt.imsave(save_file_img, final_image, cmap="gray")
-            #-----------------------------------------------------------------------------------------------
+        save_file_img = self.generate_images(output_loc, std_dev, csv_num_str)
 
 
-            #updating csv
-            with open(os.path.join(output_loc,"images.csv"), "a") as csvFile:
-                fieldnames = ['Image path']
-                writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
-                #writer = csv.writer(csvFile)
+        #updating csv
+        with open(os.path.join(output_loc,"images.csv"), "a") as csvFile:
+            fieldnames = ['Image path']
+            writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
 
-                writer.writeheader()
-                writer.writerow({'Image path': save_file_img })
-                #writer.writerow(save_file_img)
+            writer.writeheader()
+            writer.writerow({'Image path': save_file_img })
 
 
     def write_files(self, output_loc: str, std_dev: float = 1.0) -> None:
 
         output_loc = Path(output_loc)
 
-        #------------------------------------------------------------------------------------
-        #TODO make this a function
-        for nn,ii in enumerate(self._csv_file):
-            csv_num_str = str(self._data_frame_count).zfill(4)
-            save_file = os.path.join(output_loc,f'{self.gen_opts.trace_file_tag}_{csv_num_str }_0.csv')
+        csv_num_str, save_file, csv_list, headers = self.csv_reader(output_loc)
 
-            headers = [i for i in self._csv_file]
-
-            csv_list = []
-            for i in headers:
-                row = self._csv_file[i]
-                csv_list.append(row)
-        #-------------------------------------------------------------------------------------
-
-        for nn,ii in enumerate(self._image_files):
-            #0 = mean, 10 = standard deviation
-
-            noise = np.random.default_rng().standard_normal(ii.shape)
-            noise_bits = noise*2**self.gen_opts.n_bits*std_dev/100
-            img_noised = ii + noise_bits
-            final_image = np.array(img_noised,dtype=np.uint8)
-            image_num_str = str(self._data_frame_count).zfill(4)
-            save_file_img = output_loc / f'{self.gen_opts.trace_file_tag}_{csv_num_str }_{nn}.tiff'
-            save_path_img = self._target_path / save_file_img
-            plt.imsave(save_file_img, final_image, cmap="gray")
+        self.generate_images(output_loc, std_dev, csv_num_str)
 
 
-            #new csvs
-            with open(save_file, 'w') as f:
+        #new csvs
+        with open(save_file, 'w') as f:
      
-                # using csv.writer method from CSV package
-                write = csv.writer(f)
+            # using csv.writer method from CSV package
+            write = csv.writer(f)
      
-                write.writerow(headers)
-                write.writerows(csv_list)
+            write.writerow(headers)
+            write.writerows(csv_list)
