@@ -3,6 +3,7 @@
 datasim: mono-repo
 ================================================================================
 '''
+from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import time
