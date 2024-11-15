@@ -4,7 +4,7 @@ datasim: mono-repo
 ================================================================================
 '''
 from __future__ import annotations
-from dataclasses import dataclass
+#from dataclasses import dataclass
 from pathlib import Path
 import time
 import shutil
@@ -38,36 +38,6 @@ class Timer:
 class DataGeneratorError(Exception):
     pass
 
-"""
-@dataclass(slots=True)
-class DataGenOpts:
-    trace_file_tag: str = "Image"
-    image_file_tag: str = "Image"
-    matchid_file: str = "matchid.m3inp"
-    n_bits: int = 8
-
-
-
-class ExperimentDataGenerator:
-    def __init__(self, frequency: float, gen_opts: DataGenOpts | None = None) -> None:
-
-        if frequency < 0.0:
-            raise DataGeneratorError("Frequency must be positive.")
-
-        if gen_opts is None:
-            self.gen_opts = DataGenOpts()
-
-        self._frequency = frequency
-        self._target_path = Path.cwd()
-
-
-        self._trace_file = Path()
-        self._csv_file = None
-        self._match_id_file = list([])
-
-        self._data_frame_count = 0
-
-        self._image_files = list([])"""
 class ExperimentDataGenerator:
     def __init__(self, frequency: float) -> None:
 
@@ -77,18 +47,15 @@ class ExperimentDataGenerator:
         self._csv_count = 0
 
         self._trace_file = None
-        #self._csv_files = list([])
-        self._csv_files = str
+        self._csv_files = list([])
         self._match_id_files = list([])
-        #self._match_id_files = str
 
         self._trace_file_tag = 'csv'
         self._csv_file_tag = 'csv'
 
         self._image_count = 0
 
-        #self._image_files = list([])
-        self._image_files = str
+        self._image_files = list([])
 
         self._trace_file_tag = 'Image'
         self._image_file_tag = 'Image'
@@ -158,7 +125,6 @@ class ExperimentDataGenerator:
 
 
     def metadata_only(self, outputloc = str) -> None:
-        #shutil.copyfile(self._match_id_file, Path(outputloc) / self.gen_opts.matchid_file)
         shutil.copyfile(self._match_id_files, os.path.join(outputloc,f'metadata.m3inp'))
 
     def csv_reader(self, output_loc):
