@@ -38,7 +38,7 @@ class Timer:
 class DataGeneratorError(Exception):
     pass
 
-
+"""
 @dataclass(slots=True)
 class DataGenOpts:
     trace_file_tag: str = "Image"
@@ -67,7 +67,33 @@ class ExperimentDataGenerator:
 
         self._data_frame_count = 0
 
-        self._image_files = list([])
+        self._image_files = list([])"""
+class ExperimentDataGenerator:
+    def __init__(self, frequency: float) -> None:
+
+        self._frequency = frequency
+        self._target_path = Path.cwd()
+
+        self._csv_count = 0
+
+        self._trace_file = None
+        #self._csv_files = list([])
+        self._csv_files = str
+        self._match_id_files = list([])
+        #self._match_id_files = str
+
+        self._trace_file_tag = 'csv'
+        self._csv_file_tag = 'csv'
+
+        self._image_count = 0
+
+        #self._image_files = list([])
+        self._image_files = str
+
+        self._trace_file_tag = 'Image'
+        self._image_file_tag = 'Image'
+        self._data_frame_count = 0
+        self.n_bits = 8
 
 
     def set_target_path(self, targ_path: Path) -> None:
@@ -78,7 +104,7 @@ class ExperimentDataGenerator:
         self._target_path = targ_path
 
 
-    def load_data_files(self, csv_file: Path, img_files: list[Path], match_id_file: Path) -> None:
+    def load_data_files(self, csv_file, img_files, match_id_file) -> None:
 
         csv_df = pd.read_csv(csv_file)
         self._csv_file = csv_df
@@ -97,7 +123,7 @@ class ExperimentDataGenerator:
         self._data_frame_count = 0
 
 
-    def generate_data(self, duration: float, output_loc: str, onecsv: bool) -> None:
+    def generate_data(self, duration, output_loc, onecsv) -> None:
 
         if duration < 0.0:
             raise DataGeneratorError("Data generation duration must be greater than 0")
@@ -114,7 +140,8 @@ class ExperimentDataGenerator:
         output_timer.start()
 
         print("Writing MatchID input file.")
-        shutil.copyfile(self._match_id_file, Path(output_loc) / self.gen_opts.matchid_file)
+        #shutil.copyfile(self._match_id_file, Path(output_loc) / self.match_id_file)
+        shutil.copyfile(self._match_id_file, os.path.join(output_loc,f'metadata.m3inp'))
 
         while not duration_timer.finished():
             if output_timer.finished():
@@ -131,11 +158,12 @@ class ExperimentDataGenerator:
 
 
     def metadata_only(self, outputloc = str) -> None:
-        shutil.copyfile(self._match_id_file, Path(outputloc) / self.gen_opts.matchid_file)
+        #shutil.copyfile(self._match_id_file, Path(outputloc) / self.gen_opts.matchid_file)
+        shutil.copyfile(self._match_id_files, os.path.join(outputloc,f'metadata.m3inp'))
 
     def csv_reader(self, output_loc):
         csv_num_str = str(self._data_frame_count).zfill(4)
-        save_file = output_loc / f'{self.gen_opts.trace_file_tag}_{csv_num_str }_0.csv' 
+        save_file = output_loc / f'{self._trace_file_tag}_{csv_num_str }_0.csv' 
 
         headers = [i for i in self._csv_file]
 
@@ -151,10 +179,10 @@ class ExperimentDataGenerator:
         for nn,ii in enumerate(self._image_files):
             #0 = mean, 1 = standard deviation
             noise = np.random.default_rng().standard_normal(ii.shape)
-            noise_bits = noise*2**self.gen_opts.n_bits**std_dev/100
+            noise_bits = noise*2**self.n_bits**std_dev/100
             img_noised = ii + noise_bits
             final_image = np.array(img_noised,dtype=np.uint8) # NOTE: checkout integer overflow issues here and use np.ceil / np.floor
-            save_file_img = os.path.join(output_loc,f'{self.gen_opts.trace_file_tag}_{csv_num_str }_{nn}.tiff')
+            save_file_img = os.path.join(output_loc,f'{self._trace_file_tag}_{csv_num_str }_{nn}.tiff')
             save_path_img = self._target_path / save_file_img
             plt.imsave(save_file_img, final_image, cmap="gray")
             return save_file_img
