@@ -84,9 +84,6 @@ class ExperimentDataGenerator:
             
             image = Image.open(ff)
             self._image_files.append(np.array(image))
-        print(self._csv_file)
-        print(self._match_id_file)
-        print(len(self._image_files))
 
 
     def reset(self) -> None:
@@ -111,7 +108,7 @@ class ExperimentDataGenerator:
 
         print("Writing MatchID input file.")
         #shutil.copyfile(self._match_id_file, Path(output_loc) / self.match_id_file)
-        shutil.copyfile(self._match_id_file, os.path.join(output_loc,f'metadata.m3inp'))
+        shutil.copyfile(self._match_id_file, os.path.join(output_loc,f'matchid.m3inp'))
 
         while not duration_timer.finished():
             if output_timer.finished():
@@ -148,7 +145,6 @@ class ExperimentDataGenerator:
         imagegen = []
         for nn,ii in enumerate(self._image_files):
             #0 = mean, 1 = standard deviation
-            print("hello")
             noise = np.random.default_rng().standard_normal(ii.shape)
             noise_bits = noise*2**self.n_bits**std_dev/100
             img_noised = ii + noise_bits
