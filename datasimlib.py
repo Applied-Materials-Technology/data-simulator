@@ -84,6 +84,9 @@ class ExperimentDataGenerator:
             
             image = Image.open(ff)
             self._image_files.append(np.array(image))
+        print(self._csv_file)
+        print(self._match_id_file)
+        print(len(self._image_files))
 
 
     def reset(self) -> None:
@@ -125,7 +128,7 @@ class ExperimentDataGenerator:
 
 
     def metadata_only(self, outputloc = str) -> None:
-        shutil.copyfile(self._match_id_files, os.path.join(outputloc,f'metadata.m3inp'))
+        shutil.copyfile(self._match_id_files, os.path.join(outputloc,f'matchid.m3inp'))
 
     def csv_reader(self, output_loc):
         csv_num_str = str(self._data_frame_count).zfill(4)
@@ -144,6 +147,7 @@ class ExperimentDataGenerator:
     def generate_images(self, output_loc, std_dev, csv_num_str):
         for nn,ii in enumerate(self._image_files):
             #0 = mean, 1 = standard deviation
+            print("hello")
             noise = np.random.default_rng().standard_normal(ii.shape)
             noise_bits = noise*2**self.n_bits**std_dev/100
             img_noised = ii + noise_bits
@@ -151,7 +155,6 @@ class ExperimentDataGenerator:
             save_file_img = os.path.join(output_loc,f'{self._trace_file_tag}_{csv_num_str }_{nn}.tiff')
             save_path_img = self._target_path / save_file_img
             plt.imsave(save_file_img, final_image, cmap="gray")
-            return save_file_img
 
 
     def write_files_onecsv(self, output_loc: str, std_dev: float = 1.0) -> None:
