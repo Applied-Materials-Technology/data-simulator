@@ -145,6 +145,7 @@ class ExperimentDataGenerator:
             return csv_num_str, save_file, csv_list, headers
 
     def generate_images(self, output_loc, std_dev, csv_num_str):
+        imagegen = []
         for nn,ii in enumerate(self._image_files):
             #0 = mean, 1 = standard deviation
             print("hello")
@@ -155,6 +156,8 @@ class ExperimentDataGenerator:
             save_file_img = os.path.join(output_loc,f'{self._trace_file_tag}_{csv_num_str }_{nn}.tiff')
             save_path_img = self._target_path / save_file_img
             plt.imsave(save_file_img, final_image, cmap="gray")
+            imagegen.append(save_file_img)
+        return imagegen
 
 
     def write_files_onecsv(self, output_loc: str, std_dev: float = 1.0) -> None:
@@ -163,7 +166,7 @@ class ExperimentDataGenerator:
 
         csv_num_str, save_file, csv_list, headers = self.csv_reader(output_loc)
 
-        save_file_img = self.generate_images(output_loc, std_dev, csv_num_str)
+        imagegen = self.generate_images(output_loc, std_dev, csv_num_str)
 
 
         #updating csv
@@ -172,7 +175,9 @@ class ExperimentDataGenerator:
             writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
 
             writer.writeheader()
-            writer.writerow({'Image path': save_file_img })
+            writer.writerow({'Image path': imagegen[0]})
+            writer.writeheader()
+            writer.writerow({'Image path': imagegen[1]})
 
 
     def write_files(self, output_loc: str, std_dev: float = 1.0) -> None:
