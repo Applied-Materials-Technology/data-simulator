@@ -49,6 +49,8 @@ class ExperimentDataGenerator:
         self._trace_file = None
         self._csv_files = list([])
         self._match_id_files = list([])
+        self._caldat_file = list([])
+        self._cal_files = list([])
 
         self._trace_file_tag = 'csv'
         self._csv_file_tag = 'csv'
@@ -71,11 +73,13 @@ class ExperimentDataGenerator:
         self._target_path = targ_path
 
 
-    def load_data_files(self, csv_file, img_files, match_id_file) -> None:
+    def load_data_files(self, csv_file, img_files, match_id_file, caldat_file, cal_file) -> None:
 
         csv_df = pd.read_csv(csv_file)
         self._csv_file = csv_df
         self._match_id_file = match_id_file
+        self._caldat_file = caldat_file
+        self._cal_file = cal_file
 
         self._image_files = list([])
         for ff in img_files:
@@ -109,6 +113,8 @@ class ExperimentDataGenerator:
         print("Writing MatchID input file.")
         #shutil.copyfile(self._match_id_file, Path(output_loc) / self.match_id_file)
         shutil.copyfile(self._match_id_file, os.path.join(output_loc,f'matchid.m3inp'))
+        shutil.copyfile(self._caldat_file, os.path.join(output_loc,f'matchid.caldat'))
+        shutil.copyfile(self._cal_file, os.path.join(output_loc,f'matchid.cal'))
 
         while not duration_timer.finished():
             if output_timer.finished():
