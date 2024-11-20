@@ -1,4 +1,8 @@
 outputs/*
+.data-sim-env
+.vscode
+dev
+dev/*
 
 #-------------------------------------------------------------------------------
 # Python Standard Ignore

@@ -4,23 +4,20 @@ datasim: mono-repo
 ================================================================================
 '''
 from __future__ import annotations
-#from dataclasses import dataclass
+from dataclasses import dataclass
+import warnings
 from pathlib import Path
 import time
 import shutil
-import os
 import csv
-
-import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
-import pandas as pd
 
 
 class Timer:
     def __init__(self, run_time: float = 0.0) -> None:
-        self._start_time = 0.0
-        self._run_time = run_time
+        self._start_time: float = 0.0
+        self._run_time: float = run_time
 
     def start(self,run_time: float | None = None) -> None:
         if run_time is not None:
@@ -35,167 +32,197 @@ class Timer:
         return (time.perf_counter() - self._start_time)
 
 
-class DataGeneratorError(Exception):
+@dataclass
+class DataSimulatorParams:
+    target_path: Path
+
+    duration: float = 10.0  # seconds
+    frequency: float = 1.0  # Hz
+
+    setup_file_tag: str = "MatchID"
+
+    trace_file_once: bool  = True
+    trace_file_tag: str = "Image"
+    trace_file_suffix: str = ".csv"
+
+    image_file_tag: str = "Image"
+    image_file_suffix: str = ".tiff"
+    image_bits: int = 8
+    image_noise_pc: float | None = 1.0
+
+    def __post_init__(self) -> None:
+        if not self.target_path.is_dir():
+            warnings.warn("Target path does not exist, creating it.")
+            self.target_path.mkdir()
+
+        if self.frequency <= 0.0:
+            warnings.warn("Frequency must be greater than zero, reseting to 1.0 Hz")
+            self.frequency = 1.0
+
+        if self.image_bits <= 0:
+            warnings.warn("Image bits must be greater than zero, reseting  to 8 bits")
+            self.image_bits = 8
+
+class DataSimulatorError(Exception):
     pass
 
-class ExperimentDataGenerator:
-    def __init__(self, frequency: float) -> None:
+class DataSimulator:
+    def __init__(self, data_sim_params: DataSimulatorParams) -> None:
+        self._params: DataSimulatorParams = data_sim_params
 
-        self._frequency = frequency
-        self._target_path = Path.cwd()
-
-        self._csv_count = 0
-
-        self._trace_file = None
-        self._csv_files = list([])
-        self._match_id_files = list([])
-        self._caldat_file = list([])
-        self._cal_files = list([])
-
-        self._trace_file_tag = 'csv'
-        self._csv_file_tag = 'csv'
-
-        self._image_count = 0
-
-        self._image_files = list([])
-
-        self._trace_file_tag = 'Image'
-        self._image_file_tag = 'Image'
-        self._data_frame_count = 0
-        self.n_bits = 8
+        self._output_count: int = 0
+        self._output_count_str: str = ""
+        self._setup_files: list[Path] | None = None
+        self._trace_file: Path | None = None
+        self._trace_data: np.ndarray | None = None
+        self._trace_headers: str = ""
+        self._image_data: list[np.ndarray] | None = None
 
 
-    def set_target_path(self, targ_path: Path) -> None:
+    def load_data_files(self,
+                        setup_files: list[Path],
+                        trace_file: Path,
+                        image_files: list[Path]) -> None:
 
-        if not targ_path.is_dir():
-            raise FileNotFoundError("Target path does not exist.")
+        for ss in setup_files:
+            if not ss.is_file():
+                raise FileExistsError(f"Setup file: {ss}, does not exist.")
 
-        self._target_path = targ_path
+        self._setup_files = setup_files
 
+        if not trace_file.is_file():
+            raise FileExistsError(f"Trace file: {trace_file}, does not exist.")
 
-    def load_data_files(self, csv_file, img_files, match_id_file, caldat_file, cal_file) -> None:
+        if trace_file.suffix != ".csv":
+            raise FileExistsError(f"Trace file: {trace_file}, must be a .csv")
 
-        csv_df = pd.read_csv(csv_file)
-        self._csv_file = csv_df
-        self._match_id_file = match_id_file
-        self._caldat_file = caldat_file
-        self._cal_file = cal_file
+        self._trace_file = trace_file
 
-        self._image_files = list([])
-        for ff in img_files:
+        if not self._params.trace_file_once:
+            with open(self._trace_file,"r",encoding="utf-8") as csv_file:
+                self._trace_headers = csv_file.readline().strip("\n")
+
+            self._trace_data = np.genfromtxt(self._trace_file,
+                                            delimiter=",",
+                                            skip_header=1)
+
+        self._image_data = []
+        for ff in image_files:
             if not ff.is_file():
                 raise FileNotFoundError("Specified image file: {ff}, does not exist")
-            
-            image = Image.open(ff)
-            self._image_files.append(np.array(image))
+
+            self._image_data.append(np.array(Image.open(ff),dtype=np.float64))
 
 
-    def reset(self) -> None:
-        self._data_frame_count = 0
+    def generate_data(self) -> None:
+
+        if (self._setup_files is None or
+            self._trace_file is None or
+            self._image_data is None):
+            raise DataSimulatorError("Load data files before generating data.")
+
+        print(f"Data generation duration is {self._params.duration} seconds")
+        print(f"Starting data generation at {self._params.frequency} Hz.")
+
+        timer_duration = Timer(self._params.duration)
+        timer_output = Timer(1.0/self._params.frequency)
+        timer_duration.start()
+        timer_output.start()
+
+        print("Writing setup files.")
+        for ss in self._setup_files:
+            shutil.copyfile(ss, self._params.target_path / \
+                str(self._params.setup_file_tag + ss.suffix))
+
+        # If we have one csv file we need to open a handle to it and keep it open
+        if not self._params.trace_file_once and self._params.duration > 0.0:
+            trace_out_file = open(self._params.target_path /
+                                        str(self._params.trace_file_tag +
+                                            self._params.trace_file_suffix),"w",
+                                            encoding="utf-8")
+            trace_writer = csv.writer(trace_out_file)
 
 
-    def generate_data(self, duration, output_loc, onecsv) -> None:
+        while not timer_duration.finished():
+            if timer_output.finished():
+                timer_output.start()
 
-        if duration < 0.0:
-            raise DataGeneratorError("Data generation duration must be greater than 0")
+                print(80*"-")
+                print(f"Writing data files for time step: {self._output_count}.")
+                print(f"Total elapsed time: {timer_duration.elapsed_time()} seconds")
+                print()
 
-        duration_timer = Timer(duration)
-        output_timer = Timer(1.0/self._frequency)
+                self._output_count_str = str(self._output_count).zfill(4)
 
-        if not Path(output_loc).is_dir():
-            os.mkdir(Path(output_loc))
-
-        print(f"Starting data generation at {self._frequency} Hz")
-
-        duration_timer.start()
-        output_timer.start()
-
-        print("Writing MatchID input file.")
-        #shutil.copyfile(self._match_id_file, Path(output_loc) / self.match_id_file)
-        shutil.copyfile(self._match_id_file, os.path.join(output_loc,f'matchid.m3inp'))
-        shutil.copyfile(self._caldat_file, os.path.join(output_loc,f'matchid.caldat'))
-        shutil.copyfile(self._cal_file, os.path.join(output_loc,f'matchid.cal'))
-
-        while not duration_timer.finished():
-            if output_timer.finished():
-                output_timer.start()
-                print(f"Writing data files for time step number: {self._data_frame_count}.")
-                print(f'Duration = {duration_timer.elapsed_time()}s')
-
-                if onecsv == True:
-                    self.write_files_onecsv(output_loc)
+                if not self._params.trace_file_once:
+                    print("MULTI")
+                    self.generate_files_multi_trace(self._params.target_path,
+                                                    trace_writer)
                 else:
-                    self.write_files(output_loc)
+                    if self._output_count == 0:
+                        shutil.copyfile(self._trace_file,
+                                        self._params.target_path /
+                                        str(self._params.trace_file_tag +
+                                            self._params.trace_file_suffix))
 
-                self._data_frame_count += 1
+                    self.generate_images(self._params.target_path)
 
+                self._output_count += 1
 
-    def metadata_only(self, outputloc = str) -> None:
-        shutil.copyfile(self._match_id_files, os.path.join(outputloc,f'matchid.m3inp'))
-
-    def csv_reader(self, output_loc):
-        csv_num_str = str(self._data_frame_count).zfill(4)
-        save_file = output_loc / f'{self._trace_file_tag}_{csv_num_str }_0.csv' 
-
-        headers = [i for i in self._csv_file]
-
-        csv_list = []
-        for i in headers:
-            row = self._csv_file[i]
-            csv_list.append(row)
-
-            
-            return csv_num_str, save_file, csv_list, headers
-
-    def generate_images(self, output_loc, std_dev, csv_num_str):
-        imagegen = []
-        for nn,ii in enumerate(self._image_files):
-            #0 = mean, 1 = standard deviation
-            noise = np.random.default_rng().standard_normal(ii.shape)
-            noise_bits = noise*2**self.n_bits**std_dev/100
-            img_noised = ii + noise_bits
-            final_image = np.array(img_noised,dtype=np.uint8) # NOTE: checkout integer overflow issues here and use np.ceil / np.floor
-            save_file_img = os.path.join(output_loc,f'{self._trace_file_tag}_{csv_num_str }_{nn}.tiff')
-            save_path_img = self._target_path / save_file_img
-            plt.imsave(save_file_img, final_image, cmap="gray")
-            imagegen.append(save_file_img)
-        return imagegen
+        if not self._params.trace_file_once and self._params.duration > 0.0:
+            trace_out_file.close()
 
 
-    def write_files_onecsv(self, output_loc: str, std_dev: float = 1.0) -> None:
+    def generate_images(self, output_path: Path) -> None:
 
-        output_loc = Path(output_loc)
+        for nn,image in enumerate(self._image_data):
+            image_to_save = np.copy(image)
 
-        csv_num_str, save_file, csv_list, headers = self.csv_reader(output_loc)
+            if self._params.image_noise_pc is not None:
+                image_to_save = image_add_noise(image_to_save,
+                                                self._params.image_bits,
+                                                self._params.image_noise_pc)
 
-        imagegen = self.generate_images(output_loc, std_dev, csv_num_str)
+            image_to_save = image_digitise(image_to_save,self._params.image_bits)
 
-
-        #updating csv
-        with open(os.path.join(output_loc,"images.csv"), "a") as csvFile:
-            fieldnames = ['Image path']
-            writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
-
-            writer.writeheader()
-            writer.writerow({'Image path': imagegen[0]})
-            writer.writeheader()
-            writer.writerow({'Image path': imagegen[1]})
-
-
-    def write_files(self, output_loc: str, std_dev: float = 1.0) -> None:
-
-        output_loc = Path(output_loc)
-
-        csv_num_str, save_file, csv_list, headers = self.csv_reader(output_loc)
-
-        self.generate_images(output_loc, std_dev, csv_num_str)
+            image_save_file = output_path / str(self._params.image_file_tag +
+                                                f"_{self._output_count_str}_{nn}"
+                                                + self._params.image_file_suffix)
+            im = Image.fromarray(image)
+            im.save(image_save_file)
 
 
-        #new csvs
-        with open(save_file, 'w') as f:
-     
-            # using csv.writer method from CSV package
-            write = csv.writer(f)
-     
-            write.writerow(headers)
-            write.writerows(csv_list)
+    def generate_files_multi_trace(self,
+                                   output_path: Path,
+                                   trace_writer) -> None:
+        # On the first iteration write the headers
+        if self._output_count == 0:
+            trace_writer.writerow(self._trace_headers)
+
+        # Write the next row to the csv for this frame
+        trace_writer.writerow(self._trace_data[self._output_count,:])
+
+        self.generate_images(output_path)
+
+
+
+def image_add_noise(image: np.ndarray,
+                    image_bits: int,
+                    noise_std_pc: float) -> np.ndarray:
+
+    noise = np.random.default_rng().standard_normal(image.shape)
+    noise_bits = (noise * (2**image_bits) * (noise_std_pc/100))
+    return image + noise_bits
+
+
+def image_digitise(image: np.ndarray, n_bits: int) -> np.ndarray:
+
+    image[image < 0] = 0
+    image[image > 2**n_bits] = 2**n_bits
+
+    if n_bits > 0 and n_bits <= 8:
+        image = np.array(image,dtype=np.uint8)
+    else:
+        image = np.array(image,dtype=np.uint16)
+
+    return image
