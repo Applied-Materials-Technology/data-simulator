@@ -98,13 +98,12 @@ class DataSimulator:
 
         self._trace_file = trace_file
 
-        if not self._params.trace_file_once:
-            with open(self._trace_file,"r",encoding="utf-8") as csv_file:
-                self._trace_headers = csv_file.readline().strip("\n")
+        with open(self._trace_file,"r",encoding="utf-8") as csv_file:
+            self._trace_headers = csv_file.readline()
 
-            self._trace_data = np.genfromtxt(self._trace_file,
-                                            delimiter=",",
-                                            skip_header=1)
+        self._trace_data = np.genfromtxt(self._trace_file,
+                                        delimiter=";",
+                                        skip_header=1)
 
         self._image_data = []
         for ff in image_files:
@@ -121,6 +120,15 @@ class DataSimulator:
             self._image_data is None):
             raise DataSimulatorError("Load data files before generating data.")
 
+        # If we have one csv file we need to open a handle to it and keep it open
+        if self._params.trace_file_once and self._params.duration > 0.0:
+            trace_file = open(self._params.target_path /
+                                        str(self._params.trace_file_tag +
+                                            self._params.trace_file_suffix),"w",
+                                            encoding="utf-8")
+            trace_writer = csv.writer(trace_file)
+
+        print(80*"-")
         print(f"Data generation duration is {self._params.duration} seconds")
         print(f"Starting data generation at {self._params.frequency} Hz.")
 
@@ -130,18 +138,10 @@ class DataSimulator:
         timer_output.start()
 
         print("Writing setup files.")
+        print()
         for ss in self._setup_files:
             shutil.copyfile(ss, self._params.target_path / \
                 str(self._params.setup_file_tag + ss.suffix))
-
-        # If we have one csv file we need to open a handle to it and keep it open
-        if not self._params.trace_file_once and self._params.duration > 0.0:
-            trace_out_file = open(self._params.target_path /
-                                        str(self._params.trace_file_tag +
-                                            self._params.trace_file_suffix),"w",
-                                            encoding="utf-8")
-            trace_writer = csv.writer(trace_out_file)
-
 
         while not timer_duration.finished():
             if timer_output.finished():
@@ -154,23 +154,49 @@ class DataSimulator:
 
                 self._output_count_str = str(self._output_count).zfill(4)
 
-                if not self._params.trace_file_once:
-                    print("MULTI")
-                    self.generate_files_multi_trace(self._params.target_path,
-                                                    trace_writer)
+                if self._params.trace_file_once and self._params.duration > 0.0:
+                    self.generate_files_one_trace(self._params.target_path,
+                                                  trace_file,
+                                                  trace_writer)
                 else:
-                    if self._output_count == 0:
-                        shutil.copyfile(self._trace_file,
-                                        self._params.target_path /
-                                        str(self._params.trace_file_tag +
-                                            self._params.trace_file_suffix))
-
-                    self.generate_images(self._params.target_path)
+                    self.generate_files_multi_trace(self._params.target_path)
 
                 self._output_count += 1
 
-        if not self._params.trace_file_once and self._params.duration > 0.0:
-            trace_out_file.close()
+        if self._params.trace_file_once and self._params.duration > 0.0:
+            trace_file.close()
+
+
+    def generate_files_one_trace(self,
+                                 output_path: Path,
+                                 trace_file,
+                                 trace_writer) -> None:
+        # On the first iteration write the headers
+        if self._output_count == 0:
+            trace_file.write(self._trace_headers)
+
+        # Write the next row to the csv for this frame
+        trace_writer.writerow(self._trace_data[self._output_count,:])
+
+        self.generate_images(output_path)
+
+
+    def generate_files_multi_trace(self,
+                                   output_path: Path) -> None:
+
+        trace_path = output_path / str(self._params.trace_file_tag +
+                                    f"_{self._output_count_str}"
+                                    + self._params.trace_file_suffix)
+
+        with open(trace_path,"w",encoding="utf-8") as trace_file:
+            trace_writer = csv.writer(trace_file)
+
+            # Always write headers for this trace file
+            trace_file.write(self._trace_headers)
+            # Write the next row to the csv for this frame
+            trace_writer.writerow(self._trace_data[self._output_count,:])
+
+        self.generate_images(output_path)
 
 
     def generate_images(self, output_path: Path) -> None:
@@ -191,18 +217,6 @@ class DataSimulator:
             im = Image.fromarray(image)
             im.save(image_save_file)
 
-
-    def generate_files_multi_trace(self,
-                                   output_path: Path,
-                                   trace_writer) -> None:
-        # On the first iteration write the headers
-        if self._output_count == 0:
-            trace_writer.writerow(self._trace_headers)
-
-        # Write the next row to the csv for this frame
-        trace_writer.writerow(self._trace_data[self._output_count,:])
-
-        self.generate_images(output_path)
 
 
 

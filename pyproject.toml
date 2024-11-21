@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "datasim"
+version = "0.0.1"
+description = "A data simulation engine"
+authors = [
+  { name = "meganasampson", email = "megan.sampson@ukaea.uk" },
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: MIT",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy==2.0.1",
+    "pillow==10.4.0",
+    "importlib_resources==6.4.5",
+]
+
+[project.urls]
+"Repository" = "https://github.com/Applied-Materials-Technology/data-simulator"
+"Issue Tracker" = "https://github.com/Applied-Materials-Technology/data-simulator/issues"
+
+[project.scripts]
+datasim = "datasim.__main__:main"
+
+[tool.setuptools.package-data]
+"datasim.data" = ["*.csv","*.m3inp","*.tiff","*.caldat","*.cal"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
