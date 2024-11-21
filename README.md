@@ -9,7 +9,7 @@ python3.9 -m venv .data-sim-env
 source .data-sim-env/bin/activate
 ```
 
-- Navigate to the root directory of the package and install it using pip:
+- Navigate to the root directory of the data-sim package and install it using pip:
 ```
 pip install .
 ```
@@ -17,11 +17,6 @@ pip install .
 - For an editable developer installation use:
 ```
 pip install -e .
-```
-
-- Install requirements
-```
-pip install -r requirements.txt
 ```
 
 ## Usage & Options
