@@ -48,7 +48,7 @@ class DataSimulatorParams:
     image_file_tag: str = "Image"
     image_file_suffix: str = ".tiff"
     image_bits: int = 8
-    image_noise_pc: float | None = 1.0
+    image_noise_pc: float | None = 0.5
 
     def __post_init__(self) -> None:
         if not self.target_path.is_dir():
@@ -76,13 +76,16 @@ class DataSimulator:
         self._trace_file: Path | None = None
         self._trace_data: np.ndarray | None = None
         self._trace_headers: str = ""
-        self._image_data: list[np.ndarray] | None = None
+
+        self._image_data: list[list[np.ndarray]] | None = None
+        self._image_ring_buffer_count: int = 0
+        self._image_ring_buffer_max: int = 1
 
 
     def load_data_files(self,
                         setup_files: list[Path],
                         trace_file: Path,
-                        image_files: list[Path]) -> None:
+                        image_files: list[list[Path]]) -> None:
 
         for ss in setup_files:
             if not ss.is_file():
@@ -107,10 +110,16 @@ class DataSimulator:
 
         self._image_data = []
         for ff in image_files:
-            if not ff.is_file():
-                raise FileNotFoundError("Specified image file: {ff}, does not exist")
+            images_this_frame = []
+            for ii in ff:
+                if not ii.is_file():
+                    raise FileNotFoundError(f"Specified image file: {ff}, does not exist")
 
-            self._image_data.append(np.array(Image.open(ff),dtype=np.float64))
+                images_this_frame.append(np.array(Image.open(ii),dtype=np.float64))
+
+            self._image_data.append(images_this_frame)
+
+        self._image_ring_buffer_max = len(self._image_data)
 
 
     def generate_data(self) -> None:
@@ -201,7 +210,9 @@ class DataSimulator:
 
     def generate_images(self, output_path: Path) -> None:
 
-        for nn,image in enumerate(self._image_data):
+        image_data_this_frame = self._image_data[self._image_ring_buffer_count]
+
+        for cc,image in enumerate(image_data_this_frame):
             image_to_save = np.copy(image)
 
             if self._params.image_noise_pc is not None:
@@ -212,12 +223,19 @@ class DataSimulator:
             image_to_save = image_digitise(image_to_save,self._params.image_bits)
 
             image_save_file = output_path / str(self._params.image_file_tag +
-                                                f"_{self._output_count_str}_{nn}"
+                                                f"_{self._output_count_str}_{cc}"
                                                 + self._params.image_file_suffix)
-            im = Image.fromarray(image)
+
+            if self._params.image_bits > 0 and self._params.image_bits <= 8:
+                im = Image.fromarray(image.astype(np.uint8))
+            else:
+                im = Image.fromarray(image.astype(np.uint16))
+
             im.save(image_save_file)
 
-
+        self._image_ring_buffer_count += self._image_ring_buffer_count
+        if self._image_ring_buffer_count >= self._image_ring_buffer_max:
+            self._image_ring_buffer_count = 0
 
 
 def image_add_noise(image: np.ndarray,

@@ -17,17 +17,17 @@ def main() -> None:
     parser.add_argument("--frequency", default = 1.0, type = float)
     args = parser.parse_args()
 
-
-    image_path = Path(files("datasim.data")
-                      .joinpath("OptSpeckle_5Mpx_2464_2056_width5_8bit_GBlur1.tiff"))
-    image_files: list[Path] = [image_path,image_path]
+    image_files: list[list[Path]] = [
+        [Path(files("datasim.data2d").joinpath("Image_0000_0.tiff")),],
+        [Path(files("datasim.data2d").joinpath("Image_0001_0.tiff")),],
+        [Path(files("datasim.data2d").joinpath("Image_0002_0.tiff")),],
+        [Path(files("datasim.data2d").joinpath("Image_0003_0.tiff")),],
+        ]
 
     setup_files: list[Path] = [
-            Path(files("datasim.data").joinpath("Test001_19-0kW.m3inp")),
-            Path(files("datasim.data").joinpath("Calib02_22-03-2023.caldat")),
-            Path(files("datasim.data").joinpath("Calib02_22-03-2023.cal"))]
+            Path(files("datasim.data2d").joinpath("Job_man_roi.m2inp")),]
 
-    trace_file: Path = Path(files("datasim.data").joinpath("tracefile.csv"))
+    trace_file: Path = Path(files("datasim.data2d").joinpath("tracefile.csv"))
 
     data_sim_params = DataSimulatorParams(target_path=Path(args.output),
                                           duration=args.duration,

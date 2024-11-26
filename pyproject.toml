@@ -31,7 +31,8 @@ dependencies = [
 datasim = "datasim.__main__:main"
 
 [tool.setuptools.package-data]
-"datasim.data" = ["*.csv","*.m3inp","*.tiff","*.caldat","*.cal"]
+"datasim.data2d" = ["*.csv","*.m2inp","*.m3inp","*.tiff","*.caldat","*.cal"]
+"datasim.data3d" = ["*.csv","*.m2inp","*.m3inp","*.tiff","*.caldat","*.cal"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
