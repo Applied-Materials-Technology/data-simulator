@@ -9,6 +9,7 @@ import warnings
 from pathlib import Path
 import time
 import shutil
+from io import StringIO
 import csv
 import numpy as np
 from PIL import Image
@@ -73,9 +74,12 @@ class DataSimulator:
         self._output_count: int = 0
         self._output_count_str: str = ""
         self._setup_files: list[Path] | None = None
+
         self._trace_file: Path | None = None
         self._trace_data: np.ndarray | None = None
         self._trace_headers: str = ""
+        self._trace_rows: int = 0
+        self._trace_ring_buffer_count: int = 0
 
         self._image_data: list[list[np.ndarray]] | None = None
         self._image_ring_buffer_count: int = 0
@@ -105,8 +109,10 @@ class DataSimulator:
             self._trace_headers = csv_file.readline()
 
         self._trace_data = np.genfromtxt(self._trace_file,
-                                        delimiter=";",
-                                        skip_header=1)
+                                         delimiter=";",
+                                         skip_header=1,
+                                         dtype=None)
+        self._trace_rows = len(self._trace_data)
 
         self._image_data = []
         for ff in image_files:
@@ -185,7 +191,7 @@ class DataSimulator:
             trace_file.write(self._trace_headers)
 
         # Write the next row to the csv for this frame
-        trace_writer.writerow(self._trace_data[self._output_count,:])
+        trace_writer.writerow(self._trace_data[self._output_count])
 
         self.generate_images(output_path)
 
@@ -198,7 +204,7 @@ class DataSimulator:
                                     + self._params.trace_file_suffix)
 
         with open(trace_path,"w",encoding="utf-8") as trace_file:
-            trace_writer = csv.writer(trace_file)
+            trace_writer = csv.writer(trace_file,delimiter=";")
 
             # Always write headers for this trace file
             trace_file.write(self._trace_headers)
