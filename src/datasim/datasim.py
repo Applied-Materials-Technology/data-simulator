@@ -9,7 +9,6 @@ import warnings
 from pathlib import Path
 import time
 import shutil
-from io import StringIO
 import csv
 import numpy as np
 from PIL import Image
@@ -64,8 +63,10 @@ class DataSimulatorParams:
             warnings.warn("Image bits must be greater than zero, reseting  to 8 bits")
             self.image_bits = 8
 
+
 class DataSimulatorError(Exception):
     pass
+
 
 class DataSimulator:
     def __init__(self, data_sim_params: DataSimulatorParams) -> None:
@@ -107,12 +108,8 @@ class DataSimulator:
 
         with open(self._trace_file,"r",encoding="utf-8") as csv_file:
             self._trace_headers = csv_file.readline()
-
-        self._trace_data = np.genfromtxt(self._trace_file,
-                                         delimiter=";",
-                                         skip_header=1,
-                                         dtype=None)
-        self._trace_rows = len(self._trace_data)
+            self._trace_data = csv_file.readlines()
+            self._trace_rows = len(self._trace_data)
 
         self._image_data = []
         for ff in image_files:
@@ -141,7 +138,7 @@ class DataSimulator:
                                         str(self._params.trace_file_tag +
                                             self._params.trace_file_suffix),"w",
                                             encoding="utf-8")
-            trace_writer = csv.writer(trace_file)
+
 
         print(80*"-")
         print(f"Data generation duration is {self._params.duration} seconds")
@@ -171,8 +168,7 @@ class DataSimulator:
 
                 if self._params.trace_file_once and self._params.duration > 0.0:
                     self.generate_files_one_trace(self._params.target_path,
-                                                  trace_file,
-                                                  trace_writer)
+                                                  trace_file)
                 else:
                     self.generate_files_multi_trace(self._params.target_path)
 
@@ -184,14 +180,17 @@ class DataSimulator:
 
     def generate_files_one_trace(self,
                                  output_path: Path,
-                                 trace_file,
-                                 trace_writer) -> None:
+                                 trace_file) -> None:
         # On the first iteration write the headers
         if self._output_count == 0:
             trace_file.write(self._trace_headers)
 
         # Write the next row to the csv for this frame
-        trace_writer.writerow(self._trace_data[self._output_count])
+        trace_file.write(self._trace_data[self._trace_ring_buffer_count])
+
+        self._trace_ring_buffer_count += 1
+        if self._trace_ring_buffer_count >= self._trace_rows:
+            self._trace_ring_buffer_count = 0
 
         self.generate_images(output_path)
 
@@ -204,12 +203,14 @@ class DataSimulator:
                                     + self._params.trace_file_suffix)
 
         with open(trace_path,"w",encoding="utf-8") as trace_file:
-            trace_writer = csv.writer(trace_file,delimiter=";")
-
             # Always write headers for this trace file
             trace_file.write(self._trace_headers)
             # Write the next row to the csv for this frame
-            trace_writer.writerow(self._trace_data[self._output_count,:])
+            trace_file.write(self._trace_data[self._trace_ring_buffer_count])
+
+        self._trace_ring_buffer_count += 1
+        if self._trace_ring_buffer_count >= self._trace_rows:
+            self._trace_ring_buffer_count = 0
 
         self.generate_images(output_path)
 
