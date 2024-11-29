@@ -240,7 +240,7 @@ class DataSimulator:
 
             im.save(image_save_file)
 
-        self._image_ring_buffer_count += self._image_ring_buffer_count
+        self._image_ring_buffer_count += 1
         if self._image_ring_buffer_count >= self._image_ring_buffer_max:
             self._image_ring_buffer_count = 0
 
