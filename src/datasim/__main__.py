@@ -15,19 +15,38 @@ def main() -> None:
     parser.add_argument("--onecsv", default = False, type = bool)
     parser.add_argument("--output", default = 'outputs', type = str)
     parser.add_argument("--frequency", default = 1.0, type = float)
+    parser.add_argument("--stereo", default = False, type = bool)
     args = parser.parse_args()
 
-    image_files: list[list[Path]] = [
-        [Path(files("datasim.data2d").joinpath("Image_0000_0.tiff")),],
-        [Path(files("datasim.data2d").joinpath("Image_0001_0.tiff")),],
-        [Path(files("datasim.data2d").joinpath("Image_0002_0.tiff")),],
-        [Path(files("datasim.data2d").joinpath("Image_0003_0.tiff")),],
-        ]
+    if args.stereo:
+        image_files: list[list[Path]] = [
+            [Path(files("datasim.data3d").joinpath("Image_0000_0.tiff")),
+             Path(files("datasim.data3d").joinpath("Image_0000_1.tiff"))],
+            [Path(files("datasim.data3d").joinpath("Image_0001_0.tiff")),
+             Path(files("datasim.data3d").joinpath("Image_0001_1.tiff"))],
+            [Path(files("datasim.data3d").joinpath("Image_0002_0.tiff")),
+             Path(files("datasim.data3d").joinpath("Image_0002_1.tiff"))],
+            ]
 
-    setup_files: list[Path] = [
-            Path(files("datasim.data2d").joinpath("Job_man_roi.m2inp")),]
+        setup_files: list[Path] = [
+                Path(files("datasim.data3d").joinpath("Job.m3inp")),
+                Path(files("datasim.data3d").joinpath("Calibration.caldat"))
+                ]
 
-    trace_file: Path = Path(files("datasim.data2d").joinpath("tracefile.csv"))
+        trace_file: Path = Path(files("datasim.data3d").joinpath("tracefile.csv"))
+
+    else:
+        image_files: list[list[Path]] = [
+            [Path(files("datasim.data2d").joinpath("Image_0000_0.tiff")),],
+            [Path(files("datasim.data2d").joinpath("Image_0001_0.tiff")),],
+            [Path(files("datasim.data2d").joinpath("Image_0002_0.tiff")),],
+            [Path(files("datasim.data2d").joinpath("Image_0003_0.tiff")),],
+            ]
+
+        setup_files: list[Path] = [
+                Path(files("datasim.data2d").joinpath("Job_man_roi.m2inp")),]
+
+        trace_file: Path = Path(files("datasim.data2d").joinpath("tracefile.csv"))
 
     data_sim_params = DataSimulatorParams(target_path=Path(args.output),
                                           duration=args.duration,

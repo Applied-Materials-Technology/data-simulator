@@ -29,14 +29,14 @@ Generate data for 5 seconds in the "outputs" folder at a frequency of 1.0 Hz wri
 python3.9 -m datasim --duration 5.0  --output "outputs" --frequency 1.0 --onecsv True
 ```
 
-Generate data for 6 seconds in the "outputs" folder at a frequency of 2.0 Hz writing a csv per data frame:
-```shell
-python3.9 -m datasim --duration 6.0  --output "outputs" --frequency 2.0
-```
-
 Generate setup files (MatchID input and calibration) only:
 ```shell
 python3.9 -m datasim --duration 0.0  --output "outputs"
+```
+
+Generate stereo DIC data for 6 seconds in the "outputs" folder at a frequency of 2.0 Hz writing a csv per data frame:
+```shell
+python3.9 -m datasim --duration 6.0  --output "outputs" --frequency 2.0 --stereo True
 ```
 
 **Options**
@@ -44,3 +44,4 @@ python3.9 -m datasim --duration 0.0  --output "outputs"
 - --output : the directory in which generated data will appear, default = 'outputs'
 - --frequency : the frequency at which data is generated in Hz, default = 0.1
 - --onecsv : toggle between a single updating csv (True), or multiple csvs (False), default = False
+- --stereo : if True generate stereo DIC data with an m3inp if False then generate 2D DIC data with an m2inp
