@@ -1,4 +1,5 @@
 outputs/*
+outputs/
 .data-sim-env
 .vscode
 dev

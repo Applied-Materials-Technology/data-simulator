@@ -8,6 +8,7 @@ version = "0.0.1"
 description = "A data simulation engine"
 authors = [
   { name = "meganasampson", email = "megan.sampson@ukaea.uk" },
+  { name = "scepticalrabbit", email = "thescepticalrabbit@gmail.com" },
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
