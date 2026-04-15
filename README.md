@@ -1,7 +1,7 @@
 # Data Simulator
 
 ## Installation
-This tool is built to be compatible with python 3.9.
+Please note: This tool is built to be compatible with python 3.9, and therefore requires older verion of it's dependencies. Please be aware of any risks these dependencies may have developed.
 
 - Create a virtual environment in a location of your choice and activate it:
 ```
